@@ -13,16 +13,6 @@ def getFileText(link):
         lines = text.splitlines()
         return lines
 
-#--------------------------------
-# Check if the line is a comment
-#--------------------------------
-
-def isTableComment(line):
-    for char in line:
-        if char == '#':
-            return True
-    return False
-
 #------------------------------
 # Create updated pdg_table.txt
 #------------------------------
@@ -31,7 +21,7 @@ def createTable():
     outputFile = ""
 
     for line in originalTable:
-        if (isTableComment(line)):
+        if (line.strip().startswith('#')):
             lineToWrite = f"{line}\n"
         else:
             if line.split()[0].isdigit() and line.split()[1].isdigit():
@@ -49,27 +39,24 @@ def createTable():
 #-------------------------------------
 
 def fixedParticleData(infoLine):
-    name = infoLine[6:23].strip()
-    trueID = infoLine[24:29].strip()
-
-    if (trueID in massWidthData):
-        if (massWidthData[trueID]['Mass']):
-            mass = massWidthData[trueID]['Mass']
-        else:
-            mass = infoLine[51:62]
-        if (massWidthData[trueID]['Width']):
-            width = massWidthData[trueID]['Width']
-        else:
-            width = infoLine[63:74]
-    else:
-        mass = infoLine[51:62]
-        width = infoLine[63:74]
+    elements = infoLine.split()
     
-    
-        
+    name = elements[1]
+    trueID = int(elements[2])
 
-    return f"{infoLine[0:5]} {name:<16} {trueID:>6} {infoLine[30:32]} {infoLine[33:36]} {infoLine[37:43]} {infoLine[44:50]} {mass:<11} {width:<11} {infoLine[75:79]} {infoLine[80:82]} {infoLine[83:87]} {infoLine[88:90]}\n"
-
+    if (len(elements) < 6): # If it's an Antiparticle
+            return f"{elements[0]:>5} {name:<16} {trueID:>6} {elements[3]:>7} {elements[4]:>5}\n"
+    else: # If it's not an Antiparticle
+        mass = float(elements[7])
+        width = float(elements[8])
+            
+        if (trueID in massWidthData):
+            if (massWidthData[trueID]['Mass']):
+                mass = float(massWidthData[trueID]['Mass'])
+            if (massWidthData[trueID]['Width']):
+                width = float(massWidthData[trueID]['Width'])
+                
+        return f"{elements[0]:>5} {name:<16} {trueID:>6} {elements[3]:>2} {elements[4]:>3} {elements[5]:<10} {elements[6]:>2} {mass:<11e} {width:<11e} {elements[9]:>3} {elements[10]:>2} {elements[11]:>3} {elements[12]:>2} {elements[13]:>4} {elements[14]:>3}\n"
 
 #---------------------------------
 # Save the data of the mass_width
@@ -82,8 +69,17 @@ def getMassWidthValues(lines):
 
         # Extracting relevant information based on the character column positions
         particleId = line[0:8].strip()
-        mass = line[33:51].strip()
-        width = line[70:88].strip()
+
+        if (line[33:51].strip()):
+            mass = line[33:51].strip()
+        else:
+            mass = 0.0 # No value is given
+        
+        if (line[70:88].strip()):
+            width = line[70:88].strip()
+        else:
+            width = 0.0 # No value is given
+
         nameWithCharge = line[107:128].strip()
         name = nameWithCharge.split()[0]  # Extract only the name, excluding the charge
 
@@ -91,7 +87,7 @@ def getMassWidthValues(lines):
         if particleId in data:
             print("Duplicated ID " + particleId)
         else:
-            data[particleId] = {'Mass': mass, 'Width': width, 'Name': name}
+            data[particleId] = {'Mass': float(mass), 'Width': float(width), 'Name': name}
 
     return data
 
