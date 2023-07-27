@@ -41,7 +41,7 @@ def createTable():
 
         outputFile += lineToWrite
 
-    with open("pdg_table.txt", 'w') as file:
+    with open("etc/pdg_table.txt", 'w') as file:
         file.write(outputFile)
 
 #-------------------------------------
@@ -53,12 +53,12 @@ def fixedParticleData(infoLine):
     trueID = infoLine[24:29].strip()
 
     if (trueID in massWidthData):
-        if (massWidthData[trueID]['Mass'][0]):
-            mass = massWidthData[trueID]['Mass'][0]
+        if (massWidthData[trueID]['Mass']):
+            mass = massWidthData[trueID]['Mass']
         else:
             mass = infoLine[51:62]
-        if (massWidthData[trueID]['Width'][0]):
-            width = massWidthData[trueID]['Width'][0]
+        if (massWidthData[trueID]['Width']):
+            width = massWidthData[trueID]['Width']
         else:
             width = infoLine[63:74]
     else:
@@ -88,18 +88,11 @@ def getMassWidthValues(lines):
         name = nameWithCharge.split()[0]  # Extract only the name, excluding the charge
 
         # Storing the data in the dictionary
-        if particleId not in data:
-            data[particleId] = {'Mass': [], 'Width': [], 'Name': []}
-        data[particleId]['Mass'].append(mass)
-        data[particleId]['Width'].append(width)
-        data[particleId]['Name'].append(name)
+        if particleId in data:
+            print("Duplicated ID " + particleId)
+        else:
+            data[particleId] = {'Mass': mass, 'Width': width, 'Name': name}
 
-    # Debug log the saved values
-    #with open("mass_width_log.txt", 'w') as file:
-    #    file.write(f"{'ID':<10} {'Mass':<20} {'Width':<15} {'Name':<15}")
-    #    for particle_id, values in data.items():
-    #        for i in range(len(values['Mass'])):
-    #            file.write(f"\n{particle_id:<10} {values['Mass'][i]:<20} {values['Width'][i]:<15} {values['Name'][i]:<15}")
     return data
 
 
